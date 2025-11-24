@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 
 class UserManager(BaseUserManager):
@@ -46,3 +47,33 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+class Course(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    duration = models.PositiveIntegerField(help_text="Duration in hours")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    teachers = models.ManyToManyField(
+        User, 
+        through='CourseTeacher',  
+        through_fields=('course', 'teacher'),
+        limit_choices_to={'role': 'teacher'},
+        related_name='courses'
+    )
+
+    def __str__(self):
+        return self.title
+
+class CourseTeacher(models.Model):
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'})
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('teacher', 'course') 
+
+    def __str__(self):
+        return f"{self.teacher.username} -> {self.course.title}"
+
+
