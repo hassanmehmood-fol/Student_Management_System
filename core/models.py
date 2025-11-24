@@ -55,11 +55,18 @@ class Course(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     teachers = models.ManyToManyField(
-        User, 
-        through='CourseTeacher',  
+        User,
+        through='CourseTeacher',
         through_fields=('course', 'teacher'),
         limit_choices_to={'role': 'teacher'},
         related_name='courses'
+    )
+    students = models.ManyToManyField(
+        User,
+        through='Enrollment',
+        through_fields=('course', 'student'),
+        limit_choices_to={'role': 'student'},
+        related_name='courses_enrolled'
     )
 
     def __str__(self):
@@ -77,3 +84,76 @@ class CourseTeacher(models.Model):
         return f"{self.teacher.username} -> {self.course.title}"
 
 
+class Enrollment(models.Model):
+    STATUS_CHOICES = (
+        ('active', 'Active'),
+        ('completed', 'Completed'),
+        ('dropped', 'Dropped'),
+    )
+
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'student'},
+        related_name='enrollments'
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='enrollments'
+    )
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'course')  # Ek student ek course me sirf ek bar enroll ho
+
+    def __str__(self):
+            return f"{self.student.username} -> {self.course.title} ({self.status})"
+    
+    
+class CourseSchedule(models.Model):
+    DAYS_OF_WEEK = (
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+        (6, 'Sunday'),
+    )
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='schedules'
+    )
+    day_of_week = models.IntegerField(choices=DAYS_OF_WEEK)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    location = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ('course', 'day_of_week', 'start_time', 'end_time')
+
+    def __str__(self):
+        return f"{self.course.title} on {self.get_day_of_week_display()} from {self.start_time} to {self.end_time} at {self.location}"
+
+class Notification(models.Model):
+    NOTIF_TYPE = (
+        ('general', 'General'),
+        ('course', 'Course'),
+        ('enrollment', 'Enrollment'),
+        ('account', 'Account'),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    notif_type = models.CharField(max_length=20, choices=NOTIF_TYPE, default='general')
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    email_sent = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    related_course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True, blank=True)
+    related_enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, null=True, blank=True)
