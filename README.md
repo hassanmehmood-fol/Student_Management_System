@@ -127,6 +127,31 @@ HOST=localhost
 PORT=5432
 ```
 
+### Example .env (recommended)
+Create a `.env` file in the repo root and DO NOT commit this file (it's ignored via .gitignore).
+```env
+# Django / security
+SECRET_KEY=replace_with_a_secure_random_string
+
+# Database
+DBNAME=your_database_name
+USER=your_db_user
+PASSWORD=your_db_password
+HOST=127.0.0.1
+PORT=5432
+
+# Email (used by admin-create-user to send password)
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=you@example.com
+EMAIL_HOST_PASSWORD=secure-password
+DEFAULT_FROM_EMAIL=no-reply@example.com
+
+# Optional: allow DEBUG override in .env for local testing
+DEBUG=True
+```
+
 ### Step 4: Run Migrations
 ```bash
 python manage.py migrate
@@ -152,6 +177,15 @@ The server will be available at `http://localhost:8000/`
 - **Admin**: `/admin/` - Django admin panel
 - **Swagger Documentation**: `/swagger/` - Interactive API documentation (when running)
 
+Implemented API endpoints (currently wired in project):
+- Register: POST /api/user/register/
+  - Body JSON: {"username": "user1", "email": "user@example.com", "password": "Passw0rd!", "role": "student"}
+- Login: POST /api/user/login/
+  - Body JSON: {"email": "user@example.com", "password": "Passw0rd!"}
+  - Returns: access and refresh JWT tokens and user info
+
+Notes about admin endpoints: the project contains an admin view to create users programmatically (admin/create-user) but the admin API URL is not currently exposed in `admin/urls.py` or included in the project's `urls.py`. If you want an admin API endpoint, add a path such as `/api/admin/create-user/` in `admin/urls.py` and include it in the project URLs.
+
 ## Authentication
 - Uses JWT token-based authentication
 - Include token in Authorization header: `Authorization: Bearer <your_token>`
@@ -170,6 +204,13 @@ The server will be available at `http://localhost:8000/`
 - Database uses PostgreSQL with environment-based configuration
 - SQLite fallback available for quick testing
 - All models include timestamp fields (created_at/updated_at where applicable)
+
+## Running tests
+At the moment there are `tests.py` files but they are placeholders. To run tests when present:
+
+```
+python manage.py test
+```
 
 ## Future Enhancements
 - Complete REST API endpoints implementation
@@ -193,3 +234,4 @@ The server will be available at `http://localhost:8000/`
   ```bash
   python manage.py runserver
   ```
+

@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.eggs/
+
+# Pytest
+.pytest_cache/
+
+# VSCode
+.vscode/
+
+# JetBrains
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Database
+*.sqlite3
+*.db
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Django static files
+staticfiles/
+
+# Byte-compiled files
+*.pyc
+
+# Local settings
+local_settings.py
+
+# Coverage
+.coverage
+coverage.xml
+
+# pip
+pip-wheel-metadata/
+
+# Django migrations (keep in repo by default) - uncomment to ignore if you prefer local-only migrations
+# */migrations/*.py
+# */migrations/*.pyc
+
+# Editor swap files
+*~
+
+# Docker
+**/docker-compose.override.yml
+
+# Secrets
+secrets.json
