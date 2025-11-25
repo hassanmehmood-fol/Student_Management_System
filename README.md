@@ -190,6 +190,19 @@ Notes about admin endpoints: the project contains an admin view to create users 
 - Uses JWT token-based authentication
 - Include token in Authorization header: `Authorization: Bearer <your_token>`
 
+Notes and examples:
+
+- If you're using the Swagger / OpenAPI "Authorize" dialog with a Bearer/http bearer scheme, paste ONLY the JWT token (no `Bearer ` prefix). The UI will add the `Bearer ` prefix for you.
+- If your Swagger settings use an apiKey field instead, paste the full header value (e.g. `Bearer <your_token>`).
+
+curl example:
+
+```bash
+curl -H "Authorization: Bearer <your_token>" http://localhost:8000/api/some-protected-endpoint/
+```
+
+Postman: use a header named `Authorization` with value `Bearer <your_token>` or use the Authorization tab -> Bearer Token field and paste only the token there.
+
 ## Configuration Details
 
 ### Settings (settings.py)

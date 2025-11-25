@@ -3,9 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from admin.serializers import AdminCreateUserSerializer
 from drf_yasg.utils import swagger_auto_schema
+from user.permissions import IsCustomAdmin
 
 class AdminCreateUserView(APIView):
-    permission_classes = [permissions.IsAdminUser]  
+    permission_classes = [IsCustomAdmin]
+ 
     
     @swagger_auto_schema(request_body=AdminCreateUserSerializer , tags=['Admin Create User'])  
     def post(self, request):
