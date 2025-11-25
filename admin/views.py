@@ -1,11 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from user.serializer import AdminCreateUserSerializer
+from admin.serializers import AdminCreateUserSerializer
+from drf_yasg.utils import swagger_auto_schema
 
 class AdminCreateUserView(APIView):
     permission_classes = [permissions.IsAdminUser]  
-
+    
+    @swagger_auto_schema(request_body=AdminCreateUserSerializer , tags=['Admin Create User'])  
     def post(self, request):
         serializer = AdminCreateUserSerializer(data=request.data)
         if serializer.is_valid():
