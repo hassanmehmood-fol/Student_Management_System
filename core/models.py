@@ -38,7 +38,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student')
     joined_date = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)  
+    is_staff = models.BooleanField(default=False) 
+    
+    enrollment_year = models.PositiveIntegerField(null=True, blank=True)
+    batch = models.CharField(max_length=50, null=True, blank=True)
+    roll_number = models.CharField(max_length=50, null=True, blank=True) 
 
     objects = UserManager()
 
@@ -107,7 +111,7 @@ class Enrollment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('student', 'course')  # Ek student ek course me sirf ek bar enroll ho
+        unique_together = ('student', 'course') 
 
     def __str__(self):
             return f"{self.student.username} -> {self.course.title} ({self.status})"
