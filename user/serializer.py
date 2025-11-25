@@ -66,17 +66,24 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.EmailField()  # use email instead of username
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
     access = serializers.CharField(read_only=True)
     refresh = serializers.CharField(read_only=True)
 
     def validate(self, data):
-        username = data.get('username')
+        email = data.get('email')
         password = data.get('password')
 
-        if username and password:
+        if email and password:
+            try:
+                user_obj = User.objects.get(email=email)
+                username = user_obj.username  # get username from email
+            except User.DoesNotExist:
+                raise serializers.ValidationError("No user found with this email.")
+
             user = authenticate(username=username, password=password)
             if user:
                 if not user.is_active:
@@ -96,4 +103,4 @@ class LoginSerializer(serializers.Serializer):
             else:
                 raise serializers.ValidationError("Unable to login with provided credentials.")
         else:
-            raise serializers.ValidationError("Must include username and password.")
+            raise serializers.ValidationError("Must include email and password.")
