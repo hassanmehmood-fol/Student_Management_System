@@ -6,5 +6,4 @@ class IsCustomAdmin(BasePermission):
     regardless of is_staff value.
     """
     def has_permission(self, request, view):
-        # request.user should be authenticated first
         return bool(request.user and request.user.is_authenticated and request.user.role == 'admin')

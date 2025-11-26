@@ -7,8 +7,6 @@ from user.permissions import IsCustomAdmin
 
 class AdminCreateUserView(APIView):
     permission_classes = [IsCustomAdmin]
- 
-    
     @swagger_auto_schema(request_body=AdminCreateUserSerializer , tags=['Admin Create User'])  
     def post(self, request):
         serializer = AdminCreateUserSerializer(data=request.data)
