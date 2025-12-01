@@ -1,43 +1,29 @@
 # Student Management System
 
 ## Description
-A comprehensive Django-based Student Management System with REST APIs for managing users (Admin, Teachers, Students), courses, enrollments, schedules, and notifications. Built with Django REST Framework and PostgreSQL.
+A Django-based Student Management System with REST APIs for managing users (Admin, Teachers, Students), courses, enrollments, schedules, and notifications.
+This repository contains a working core data model, admin APIs and a user login endpoint (JWT-based). The project uses Django REST Framework and drf-yasg for API docs.
 
 ## Features
-- **User Management**: Multi-role system (Admin, Teacher, Student)
-- **Course Management**: Create and manage courses with descriptions and duration
-- **Enrollment System**: Students can enroll in courses with status tracking (Active, Completed, Dropped)
-- **Course Scheduling**: Manage course schedules with day, time, and location
-- **Teacher Assignment**: Assign teachers to courses
-- **Notifications**: System for sending notifications to users (General, Course, Enrollment, Account related)
-- **JWT Authentication**: Secure authentication using JWT tokens
-- **API Documentation**: Swagger/OpenAPI documentation with drf-yasg
+- Multi-role user model (admin, teacher, student)
+- Courses, enrollments and course schedules models
+- Notifications model (per-user notifications)
+- Admin-focused APIs for user management, courses, teacher & student profiles
+- User login (email + password) which returns JWT access & refresh tokens
+- Swagger / Redoc OpenAPI docs via drf-yasg
 
-## Tech Stack
-- **Framework**: Django 5.2.8
-- **Database**: PostgreSQL
-- **API**: Django REST Framework
-- **Authentication**: djangorestframework-simplejwt
-- **Documentation**: drf-yasg (Swagger)
-
-## Installed Libraries / Packages
-- Django
-- djangorestframework
+## Tech stack / dependencies
+- Python 3.8+ (project was created for Django 5.x)
+- Django 5.x
+- Django REST Framework
 - djangorestframework-simplejwt
-- drf-yasg
-- psycopg2-binary
-- python-dotenv
-- PyJWT
-- pytz
-- sqlparse
-- tzdata
-- inflection
-- packaging
-- PyYAML
-- uritemplate
-- asgiref
+- drf-yasg (Swagger / OpenAPI)
+- Optional: PostgreSQL for production (project settings read DB details from environment)
 
-## Project Structure
+## Notes about dependencies
+This repository does not provide a pinned `requirements.txt`. If you need reproducible installs please create/commit one (pip freeze > requirements.txt) or add a minimal list before deploying.
+
+## Project structure (important files & apps)
 ```
 Student Management System/
 ├── core/                          # Core app - Models and Admin
@@ -59,12 +45,11 @@ Student Management System/
 └── README.md                    # This file
 ```
 
-## Database Models
+## Database models (implemented)
 
 ### User
-- Multi-role authentication system
-- Roles: Admin, Teacher, Student
-- Fields: username, email, first_name, last_name, role, joined_date, is_active, is_staff
+- Implemented as a custom `core.User` model (AUTH_USER_MODEL) with roles: `admin`, `teacher`, `student`.
+- Key fields: username, email, first_name, last_name, role, joined_date, enrollment_year, batch, roll_number, is_active, is_staff
 
 ### Course
 - Course information and management
@@ -93,7 +78,66 @@ Student Management System/
 - Fields: title, message, is_read, email_sent status
 - Can relate to specific courses or enrollments
 
-## Installation & Setup
+## Quickstart — local development
+
+The project settings are configured to load database credentials from environment variables (PostgreSQL by default) but there is a `db.sqlite3` file in the repository for a fast local start. Two options:
+
+Option A — Quick local (use the existing SQLite DB as-is):
+
+1. Create & activate a virtual environment
+
+```powershell
+# from project root (Windows PowerShell)
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
+
+2. Install dependencies (if you have a requirements file, otherwise install commonly used packages):
+
+```powershell
+pip install django djangorestframework djangorestframework-simplejwt drf-yasg python-dotenv
+```
+
+3. Run the development server
+
+```powershell
+python manage.py runserver
+```
+
+Option B — Configure PostgreSQL (production-like / recommended for deployments)
+
+1. Create a `.env` file with your database and email settings (the project expects these environment variables to be set):
+
+```env
+SECRET_KEY=replace-me
+DBNAME=your_db_name
+USER=your_db_user
+PASSWORD=your_db_password
+HOST=127.0.0.1
+PORT=5432
+
+# Optional email settings used in settings.py
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=you@example.com
+EMAIL_HOST_PASSWORD=top-secret
+DEFAULT_FROM_EMAIL=no-reply@example.com
+```
+
+2. Install PostgreSQL client binders and other deps:
+
+```powershell
+pip install psycopg2-binary
+```
+
+3. Run migrations and start the server
+
+```powershell
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
 
 ### Prerequisites
 - Python 3.8+
@@ -112,13 +156,11 @@ python -m venv venv
 venv\Scripts\Activate.ps1
 ```
 
-### Step 2: Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+## Important: requirements.txt
+If you plan to run this on another machine or CI, add a `requirements.txt` to the repo. The project’s README previously referenced `requirements.txt` but the repository currently does not contain one.
 
-### Step 3: Environment Configuration
-Create a `.env` file in the project root with PostgreSQL credentials:
+### Step 3: Environment configuration
+Environment configuration should be stored in a `.env` file (not committed). The `settings.py` reads DB and email settings from environment variables.
 ```
 DBNAME=your_database_name
 USER=your_db_user
@@ -152,7 +194,7 @@ DEFAULT_FROM_EMAIL=no-reply@example.com
 DEBUG=True
 ```
 
-### Step 4: Run Migrations
+### Step 4: Run migrations
 ```bash
 python manage.py migrate
 ```
@@ -169,26 +211,35 @@ python manage.py runserver
 
 The server will be available at `http://localhost:8000/`
 
-## Admin Panel
+- Access Django admin at: `http://localhost:8000/admin/` (standard Django admin)
 - Access Django admin at: `http://localhost:8000/admin/`
 - Manage Users, Courses, Teachers, Enrollments, Schedules, and Notifications
 
-## API Endpoints (Available)
-- **Admin**: `/admin/` - Django admin panel
-- **Swagger Documentation**: `/swagger/` - Interactive API documentation (when running)
 
-Implemented API endpoints (currently wired in project):
-- Register: POST /api/user/register/
-  - Body JSON: {"username": "user1", "email": "user@example.com", "password": "Passw0rd!", "role": "student"}
-- Login: POST /api/user/login/
-  - Body JSON: {"email": "user@example.com", "password": "Passw0rd!"}
-  - Returns: access and refresh JWT tokens and user info
+## API overview (what is implemented)
+
+- Swagger UI: GET `/swagger/` (interactive API docs)
+- Redoc: GET `/redoc/`
+- Admin panel: `/admin/` (Django admin UI)
+
+User/API endpoints currently wired in the code (match the implementation):
+
+- POST `/api/user/login/` — user login (email + password) — returns JSON with `access` and `refresh` JWT tokens and basic user info.
+
+Admin-only endpoints (permission class `IsCustomAdmin` required — user.role must be `admin`):
+
+- POST `/api/admin/create-user/` — admin creates a user (username, email, role, first/last name). This _is_ present in `admin.views.AdminCreateUserView`.
+- GET `/api/admin/user-list/` — list users (supports `?role=teacher` or `?role=student` to filter)
+- `/api/admin/courses/` — ModelViewSet for courses (list, create, retrieve, update, partial_update, destroy)
+- `/api/admin/teachers/` — read-only list/detail of users with role `teacher` including their `courses`
+- `/api/admin/students/` — admin student CRUD endpoints
+
+Note: The README previously claimed a public register endpoint at `/api/user/register/` — there is no such endpoint in the current code. If you want public self-registration, add a registration view/route.
 
 Notes about admin endpoints: the project contains an admin view to create users programmatically (admin/create-user) but the admin API URL is not currently exposed in `admin/urls.py` or included in the project's `urls.py`. If you want an admin API endpoint, add a path such as `/api/admin/create-user/` in `admin/urls.py` and include it in the project URLs.
 
 ## Authentication
-- Uses JWT token-based authentication
-- Include token in Authorization header: `Authorization: Bearer <your_token>`
+- Login returns JWT access & refresh tokens. Include tokens in HTTP requests using the Authorization header like `Authorization: Bearer <access_token>`
 
 Notes and examples:
 
@@ -218,21 +269,14 @@ Postman: use a header named `Authorization` with value `Bearer <your_token>` or 
 - SQLite fallback available for quick testing
 - All models include timestamp fields (created_at/updated_at where applicable)
 
-## Running tests
-At the moment there are `tests.py` files but they are placeholders. To run tests when present:
+## Tests
+There are placeholder `tests.py` files in the apps; actual test coverage is not implemented. Running `python manage.py test` will currently run zero tests. Consider adding unit tests for views/serializers and API endpoints.
 
-```
-python manage.py test
-```
-
-## Future Enhancements
-- Complete REST API endpoints implementation
-- Grades and assessment system
-- Real-time notifications
-- Email notification service
-- Student performance analytics
-- Course prerequisites
-- Payment integration for paid courses
+## Suggestions / notes from this code review
+- README referenced `requirements.txt` and a `/api/user/register/` endpoint that do not exist — both have been corrected in this file.
+- There are no tests implemented yet — adding tests is recommended.
+- `settings.py` contains a hard-coded SECRET_KEY — move that to `.env` and keep it out of source control.
+- The project currently expects PostgreSQL in `settings.py` (via environment variables) but a `db.sqlite3` is present for quick local usage — choose one consistent approach for contributors / CI.
 
 ## Usage
 - Activate virtual environment:
@@ -247,4 +291,10 @@ python manage.py test
   ```bash
   python manage.py runserver
   ```
+
+If you want, I can also:
+
+- add a `requirements.txt` with the most common dependencies,
+- implement a lightweight `register` endpoint,
+- add initial unit tests for the login flow and admin create-user endpoints.
 
