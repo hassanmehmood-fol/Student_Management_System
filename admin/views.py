@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from admin.serializers import AdminCreateUserSerializer , UserNameSerializer
+from admin.serializers import AdminCreateUserSerializer , UserNameSerializer , StudentProfileSerializer
 from drf_yasg.utils import swagger_auto_schema
 from user.permissions import IsCustomAdmin
 from rest_framework import generics
@@ -10,6 +10,8 @@ from drf_yasg import openapi
 from rest_framework import viewsets
 from core.models import Course
 from admin.serializers import CourseSerializer
+from django.shortcuts import get_object_or_404
+from admin.serializers import TeacherProfileSerializer
 
 class AdminCreateUserView(APIView):
     permission_classes = [IsCustomAdmin]
@@ -86,3 +88,54 @@ class CourseViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(tags=["Delete Course"])
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+    
+    
+    
+class TeacherProfileViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Admin can view all teachers with their courses efficiently (prefetch_related).
+    """
+    queryset = User.objects.filter(role='teacher').prefetch_related('courses')
+    serializer_class = TeacherProfileSerializer
+    permission_classes = [IsCustomAdmin]
+
+    @swagger_auto_schema(tags=["Teacher Profiles"])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Teacher Profile Detail"])
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+        return teacher    
+    
+    
+class StudentProfileViewSet(viewsets.ModelViewSet):
+    """
+    Admin can view, update, or delete student profiles
+    """
+    serializer_class = StudentProfileSerializer
+    permission_classes = [IsCustomAdmin]
+
+    def get_queryset(self):
+        
+        return User.objects.filter(role='student')
+
+    @swagger_auto_schema(tags=["Student Profiles"])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Student Profile Detail"])
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Update Student"])
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Partial Update Student"])
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Delete Student"])
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)    

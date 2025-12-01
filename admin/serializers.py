@@ -61,3 +61,32 @@ class CourseSerializer(serializers.ModelSerializer):
             for teacher in teachers:
                 CourseTeacher.objects.create(course=instance, teacher=teacher)
         return instance       
+
+
+class CourseBriefSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['id', 'title', 'description', 'duration']
+
+class TeacherProfileSerializer(serializers.ModelSerializer):
+    courses = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'courses']
+
+    def get_courses(self, obj):
+        return CourseSerializer(obj.courses.all(), many=True).data
+    
+    
+class StudentProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 
+            'role', 'enrollment_year', 'batch', 'roll_number', 'is_active'
+        ]
+        read_only_fields = ['id', 'role'] 
+
+
+
