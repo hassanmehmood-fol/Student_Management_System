@@ -1,6 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from core.models import User
+from core.models import Course, User, CourseTeacher
 
 class AdminCreateUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,3 +22,42 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
+
+
+class UserNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name']
+        
+        
+class CourseSerializer(serializers.ModelSerializer):
+    teachers = serializers.SlugRelatedField(
+        many=True,
+        slug_field='username',
+        queryset=User.objects.filter(role='teacher'),
+        required=False  
+    )
+
+    class Meta:
+        model = Course
+        fields = ['id', 'title', 'description', 'duration', 'teachers', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        teachers = validated_data.pop('teachers', None)
+        course = Course.objects.create(**validated_data)
+        if teachers:
+            for teacher in teachers:
+                CourseTeacher.objects.create(course=course, teacher=teacher)
+        return course
+
+    def update(self, instance, validated_data):
+        teachers = validated_data.pop('teachers', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if teachers is not None:  
+            instance.teachers.clear()
+            for teacher in teachers:
+                CourseTeacher.objects.create(course=instance, teacher=teacher)
+        return instance       
