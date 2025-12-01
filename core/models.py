@@ -39,6 +39,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     joined_date = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False) 
+    department = models.CharField(max_length=100, null=True, blank=True)
+
     
     enrollment_year = models.PositiveIntegerField(null=True, blank=True)
     batch = models.CharField(max_length=50, null=True, blank=True)
