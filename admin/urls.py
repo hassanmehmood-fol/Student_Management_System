@@ -11,5 +11,6 @@ router.register(r'students', StudentProfileViewSet, basename='students')
 urlpatterns = [
     path('create-user/', AdminCreateUserView.as_view(), name='admin-create-user'),
     path('user-list/', UserListView.as_view(), name='admin-user-list'),
+    
      path('', include(router.urls))
 ]

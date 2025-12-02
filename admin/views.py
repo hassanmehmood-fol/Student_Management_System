@@ -16,7 +16,7 @@ from admin.serializers import TeacherProfileSerializer
 class AdminCreateUserView(APIView):
     permission_classes = [IsCustomAdmin]
     
-    @swagger_auto_schema(request_body=AdminCreateUserSerializer , tags=['Admin Create User'])  
+    @swagger_auto_schema(request_body=AdminCreateUserSerializer , tags=['Admin Profile'])  
     def post(self, request):
         serializer = AdminCreateUserSerializer(data=request.data)
         if serializer.is_valid():
@@ -48,7 +48,7 @@ class UserListView(generics.ListAPIView):
 
     @swagger_auto_schema(
         manual_parameters=[role_param],
-        tags=['User List']
+        tags=['Admin Profile']
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
@@ -65,27 +65,27 @@ class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     permission_classes = [IsCustomAdmin]
 
-    @swagger_auto_schema(tags=["Courses List"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Creates a Course"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Get Course Details"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Update Course"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Partial Update Course"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Delete Course"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
     
@@ -99,11 +99,11 @@ class TeacherProfileViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TeacherProfileSerializer
     permission_classes = [IsCustomAdmin]
 
-    @swagger_auto_schema(tags=["Teacher Profiles"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Teacher Profile Detail"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
         return teacher    
@@ -119,23 +119,25 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         
         return User.objects.filter(role='student')
-
-    @swagger_auto_schema(tags=["Student Profiles"])
+    
+    @swagger_auto_schema(tags=["Admin Profile"])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Student Profile Detail"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Update Student"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Partial Update Student"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Delete Student"])
+    @swagger_auto_schema(tags=["Admin Profile"])
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)    
+    
+    
