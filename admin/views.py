@@ -1,11 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from admin.serializers import AdminCreateUserSerializer , UserNameSerializer , StudentProfileSerializer
+from admin.serializers import AdminCreateUserSerializer , UserNameSerializer , StudentProfileSerializer ,  CourseScheduleSerializer 
 from drf_yasg.utils import swagger_auto_schema
 from user.permissions import IsCustomAdmin
 from rest_framework import generics
-from core.models import User
+from core.models import User , CourseSchedule
 from drf_yasg import openapi
 from rest_framework import viewsets
 from core.models import Course
@@ -140,4 +140,35 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)    
     
-    
+
+class CourseScheduleViewSet(viewsets.ModelViewSet):
+    """
+    Admin can create, update, view, and delete course schedules
+    """
+    queryset = CourseSchedule.objects.all()
+    serializer_class = CourseScheduleSerializer
+    permission_classes = [IsCustomAdmin]
+
+    @swagger_auto_schema(tags=["Admin Profile"])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Admin Profile"])
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Admin Profile"])
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Admin Profile"])
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Admin Profile"])
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(tags=["Admin Profile"])
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)

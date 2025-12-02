@@ -1,7 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from core.models import User
-from core.models import Course, User, CourseTeacher
+from core.models import Course, User, CourseTeacher , CourseSchedule
 
 class AdminCreateUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -88,5 +88,12 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'role'] 
 
+
+class CourseScheduleSerializer(serializers.ModelSerializer):
+    course_title = serializers.CharField(source='course.title', read_only=True)
+
+    class Meta:
+        model = CourseSchedule
+        fields = ['id', 'course', 'course_title', 'day_of_week', 'start_time', 'end_time', 'location']
 
 
