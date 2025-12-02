@@ -11,7 +11,7 @@ from rest_framework import viewsets
 from core.models import Course
 from admin.serializers import CourseSerializer
 from django.shortcuts import get_object_or_404
-from admin.serializers import TeacherProfileSerializer
+from admin.serializers import TeacherProfileSerializer , EnrollmentSerializer
 
 class AdminCreateUserView(APIView):
     permission_classes = [IsCustomAdmin]
@@ -172,3 +172,19 @@ class CourseScheduleViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(tags=["Admin Profile"])
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+    
+    
+class EnrollStudentView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    @swagger_auto_schema(request_body=EnrollmentSerializer, tags=["Admin Profile"])
+    def post(self, request):
+        serializer = EnrollmentSerializer(data=request.data)
+        if serializer.is_valid():
+            enrollment = serializer.save()
+            return Response({
+                "message": "Student enrolled successfully!",
+                "data": EnrollmentSerializer(enrollment).data
+            }, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    

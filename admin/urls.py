@@ -1,6 +1,6 @@
 from django.urls import path ,include
 from rest_framework.routers import DefaultRouter
-from admin.views import AdminCreateUserView , UserListView  , CourseViewSet  , TeacherProfileViewSet , StudentProfileViewSet , CourseScheduleViewSet
+from admin.views import AdminCreateUserView , UserListView  , CourseViewSet  , TeacherProfileViewSet , StudentProfileViewSet , CourseScheduleViewSet , EnrollStudentView
 
 
 router = DefaultRouter()
@@ -12,6 +12,8 @@ router.register(r'course-schedules', CourseScheduleViewSet, basename='course-sch
 urlpatterns = [
     path('create-user/', AdminCreateUserView.as_view(), name='admin-create-user'),
     path('user-list/', UserListView.as_view(), name='admin-user-list'),
+    path('enroll-student/', EnrollStudentView.as_view(), name='enroll-student'),
+
     
-     path('', include(router.urls))
+    path('', include(router.urls))
 ]

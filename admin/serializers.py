@@ -1,7 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from core.models import User
-from core.models import Course, User, CourseTeacher , CourseSchedule
+from core.models import Course, User, CourseTeacher , CourseSchedule , Enrollment
 
 class AdminCreateUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -97,3 +97,40 @@ class CourseScheduleSerializer(serializers.ModelSerializer):
         fields = ['id', 'course', 'course_title', 'day_of_week', 'start_time', 'end_time', 'location']
 
 
+class EnrollmentSerializer(serializers.ModelSerializer):
+    student_username = serializers.CharField(write_only=True)
+    course_title = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = Enrollment
+        fields = ['id', 'student_username', 'course_title', 'status', 'enrolled_at']
+
+        read_only_fields = ['enrolled_at']
+
+    def create(self, validated_data):
+        student_username = validated_data.pop('student_username')
+        course_title = validated_data.pop('course_title')
+
+        
+        try:
+            student = User.objects.get(username=student_username, role='student')
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Student not found or not a student.")
+
+        
+        try:
+            course = Course.objects.get(title=course_title)
+        except Course.DoesNotExist:
+            raise serializers.ValidationError("Course not found.")
+
+    
+        enrollment, created = Enrollment.objects.get_or_create(
+            student=student,
+            course=course,
+            defaults={'status': validated_data.get('status', 'active')}
+        )
+
+        if not created:
+            raise serializers.ValidationError("Student is already enrolled in this course.")
+
+        return enrollment
