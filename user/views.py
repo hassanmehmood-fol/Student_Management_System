@@ -12,7 +12,7 @@ class LoginView(APIView):
     parser_classes = [JSONParser]  
     authentication_classes = [] 
 
-    @swagger_auto_schema(request_body=LoginSerializer , tags=['User Login'])  
+    @swagger_auto_schema(request_body=LoginSerializer , tags=['User (Admin , Teacher , Student) Login'])  
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():

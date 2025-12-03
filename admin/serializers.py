@@ -37,10 +37,15 @@ class CourseSerializer(serializers.ModelSerializer):
         queryset=User.objects.filter(role='teacher'),
         required=False  
     )
+    
+    students = serializers.SerializerMethodField() 
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'duration', 'teachers', 'created_at', 'updated_at']
+        fields = ['id', 'title', 'description', 'duration', 'teachers', 'students', 'created_at', 'updated_at']
+        
+    def get_students(self, obj):
+        return [en.student.username for en in obj.enrollments.all()]    
 
     def create(self, validated_data):
         teachers = validated_data.pop('teachers', None)
@@ -134,3 +139,16 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Student is already enrolled in this course.")
 
         return enrollment
+
+
+class AssignTeacherSerializer(serializers.Serializer):
+    teacher_id = serializers.IntegerField(required=True)
+
+    def validate_teacher_id(self, value):
+        from core.models import User
+        try:
+            teacher = User.objects.get(id=value, role='teacher')
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Teacher not found or not a teacher.")
+        return value
+    

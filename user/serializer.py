@@ -10,7 +10,7 @@ from core.models import User
 import re
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()  # use email instead of username
+    email = serializers.EmailField()  
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
     access = serializers.CharField(read_only=True)
     refresh = serializers.CharField(read_only=True)
@@ -31,7 +31,7 @@ class LoginSerializer(serializers.Serializer):
                 if not user.is_active:
                     raise serializers.ValidationError("User account is disabled.")
                 
-                # Generate JWT tokens
+            
                 refresh = RefreshToken.for_user(user)
                 data['access'] = str(refresh.access_token)
                 data['refresh'] = str(refresh)
