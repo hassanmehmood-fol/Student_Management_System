@@ -103,32 +103,31 @@ class CourseScheduleSerializer(serializers.ModelSerializer):
 
 
 class EnrollmentSerializer(serializers.ModelSerializer):
-    student_username = serializers.CharField(write_only=True)
-    course_title = serializers.CharField(write_only=True)
+    student_id = serializers.IntegerField(write_only=True)
+    course_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Enrollment
-        fields = ['id', 'student_username', 'course_title', 'status', 'enrolled_at']
-
-        read_only_fields = ['enrolled_at']
+        fields = ['id', 'student_id', 'course_id', 'status', 'enrolled_at']
+        read_only_fields = ['id', 'enrolled_at']
 
     def create(self, validated_data):
-        student_username = validated_data.pop('student_username')
-        course_title = validated_data.pop('course_title')
+        student_id = validated_data.pop('student_id')
+        course_id = validated_data.pop('course_id')
 
-        
+        # Validate student
         try:
-            student = User.objects.get(username=student_username, role='student')
+            student = User.objects.get(id=student_id, role='student')
         except User.DoesNotExist:
-            raise serializers.ValidationError("Student not found or not a student.")
+            raise serializers.ValidationError({"student_id": "Student not found or not a student."})
 
-        
+        # Validate course
         try:
-            course = Course.objects.get(title=course_title)
+            course = Course.objects.get(id=course_id)
         except Course.DoesNotExist:
-            raise serializers.ValidationError("Course not found.")
+            raise serializers.ValidationError({"course_id": "Course not found."})
 
-    
+        # Check if already enrolled
         enrollment, created = Enrollment.objects.get_or_create(
             student=student,
             course=course,
@@ -136,7 +135,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         )
 
         if not created:
-            raise serializers.ValidationError("Student is already enrolled in this course.")
+            raise serializers.ValidationError({"detail": "Student is already enrolled in this course."})
 
         return enrollment
 

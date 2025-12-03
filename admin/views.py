@@ -214,7 +214,7 @@ class CourseScheduleViewSet(viewsets.ModelViewSet):
 class EnrollStudentView(APIView):
     permission_classes = [IsCustomAdmin]
 
-    @swagger_auto_schema(request_body=EnrollmentSerializer, tags=["Admin Profile"])
+    @swagger_auto_schema(request_body=EnrollmentSerializer, tags=["Admin Enrollment"])
     def post(self, request):
         serializer = EnrollmentSerializer(data=request.data)
         if serializer.is_valid():
@@ -223,5 +223,4 @@ class EnrollStudentView(APIView):
                 "message": "Student enrolled successfully!",
                 "data": EnrollmentSerializer(enrollment).data
             }, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
