@@ -135,16 +135,24 @@ class CourseSchedule(models.Model):
         on_delete=models.CASCADE,
         related_name='schedules'
     )
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'teacher'},
+        related_name='schedules'
+    )
     day_of_week = models.IntegerField(choices=DAYS_OF_WEEK)
     start_time = models.TimeField()
     end_time = models.TimeField()
     location = models.CharField(max_length=100)
 
     class Meta:
-        unique_together = ('course', 'day_of_week', 'start_time', 'end_time')
+        unique_together = ('course', 'teacher', 'day_of_week', 'start_time', 'end_time')
 
     def __str__(self):
-        return f"{self.course.title} on {self.get_day_of_week_display()} from {self.start_time} to {self.end_time} at {self.location}"
+        return f"{self.course.title} ({self.teacher.username}) on {self.get_day_of_week_display()} from {self.start_time} to {self.end_time} at {self.location}"
+
+
 
 class Notification(models.Model):
     NOTIF_TYPE = (

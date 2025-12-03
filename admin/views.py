@@ -49,7 +49,7 @@ class UserListView(generics.ListAPIView):
 
     @swagger_auto_schema(
         manual_parameters=[role_param],
-        tags=['Admin Profile']
+        tags=['List Users by Admin']
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
@@ -186,27 +186,27 @@ class CourseScheduleViewSet(viewsets.ModelViewSet):
     serializer_class = CourseScheduleSerializer
     permission_classes = [IsCustomAdmin]
 
-    @swagger_auto_schema(tags=["Admin Profile"])
+    @swagger_auto_schema(tags=["Course Schedule List by Admin"])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Admin Profile"])
+    @swagger_auto_schema(tags=["Add Course Schedule by Admin"])
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Admin Profile"])
+    @swagger_auto_schema(tags=["Course Schedule Details by Admin"])
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Admin Profile"])
+    @swagger_auto_schema(tags=["Update Course Schedule by Admin"])
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Admin Profile"])
+    @swagger_auto_schema(tags=["Partial Update Course Schedule by Admin"])
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Admin Profile"])
+    @swagger_auto_schema(tags=["Admin Profile - Delete Course Schedule by Admin"])
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
     
