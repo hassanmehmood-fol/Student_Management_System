@@ -13,7 +13,6 @@ urlpatterns = [
     path('create-user/', AdminCreateUserView.as_view(), name='admin-create-user'),
     path('user-list/', UserListView.as_view(), name='admin-user-list'),
     path('enroll-student/', EnrollStudentView.as_view(), name='enroll-student'),
-
     
     path('', include(router.urls))
 ]
