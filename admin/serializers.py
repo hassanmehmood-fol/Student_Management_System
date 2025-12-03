@@ -96,10 +96,11 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 
 class CourseScheduleSerializer(serializers.ModelSerializer):
     course_title = serializers.CharField(source='course.title', read_only=True)
+    teacher_name = serializers.CharField(source='teacher.username', read_only=True)
 
     class Meta:
         model = CourseSchedule
-        fields = ['id', 'course', 'course_title', 'day_of_week', 'start_time', 'end_time', 'location']
+        fields = ['id', 'course', 'course_title','teacher', 'teacher_name' , 'day_of_week', 'start_time', 'end_time', 'location']
 
 
 class EnrollmentSerializer(serializers.ModelSerializer):
