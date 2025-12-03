@@ -1,10 +1,10 @@
-from rest_framework.views import APIView
+from rest_framework.views import APIView 
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from admin.serializers import AdminCreateUserSerializer , UserNameSerializer , StudentProfileSerializer ,  CourseScheduleSerializer 
 from drf_yasg.utils import swagger_auto_schema
 from user.permissions import IsCustomAdmin
-from rest_framework import generics
+from rest_framework import generics , mixins
 from core.models import User , CourseSchedule
 from drf_yasg import openapi
 from rest_framework import viewsets
@@ -141,7 +141,13 @@ class TeacherProfileViewSet(viewsets.ReadOnlyModelViewSet):
         return teacher    
     
     
-class StudentProfileViewSet(viewsets.ModelViewSet):
+class StudentProfileViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
     """
     Admin can view, update, or delete student profiles
     """
@@ -149,9 +155,8 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsCustomAdmin]
 
     def get_queryset(self):
-        
         return User.objects.filter(role='student')
-    
+
     @swagger_auto_schema(tags=["Display Students List by Admin"])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -170,7 +175,7 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
 
     @swagger_auto_schema(tags=["Delete Student Profile by Admin"])
     def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs)    
+        return super().destroy(request, *args, **kwargs) 
     
 
 class CourseScheduleViewSet(viewsets.ModelViewSet):
