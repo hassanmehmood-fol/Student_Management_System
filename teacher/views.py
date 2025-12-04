@@ -43,8 +43,25 @@ class TeacherAssignedCoursesView(generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
     def get_queryset(self):
-    
         return Course.objects.filter(teachers=self.request.user)
+    
+    
+class TeacherAssignedCourseDetailView(generics.RetrieveAPIView):
+    serializer_class = TeacherAssignedCourseSerializer
+    permission_classes = [IsAuthenticated, IsTeacherAndOwner]
+    lookup_url_kwarg = 'course_id'
+
+    def get_queryset(self):
+        return Course.objects.filter(teachers=self.request.user)
+
+    @swagger_auto_schema(
+        operation_description="Retrieve details of a specific course assigned to the authenticated teacher.",
+        tags=["Retrieve details of a specific course assigned to the authenticated teacher."],
+        responses={200: TeacherAssignedCourseSerializer}
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)         
+    
     
 # class TeacherCoursesWithStudentsView(generics.ListAPIView):
 #     serializer_class = TeacherCourseWithStudentsSerializer
@@ -63,9 +80,15 @@ class TeacherAssignedCoursesView(generics.ListAPIView):
 
 class TeacherCoursesWithStudentsView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsTeacherAndOwner]
+    
+    def get_serializer_class(self):
+        student_id = self.request.query_params.get('student_id')
+        if student_id:
+            return StudentDetailSerializer
+        return TeacherCourseWithStudentsSerializer
 
     @swagger_auto_schema(
-        manual_parameters=[
+        manual_parameters=[              
             openapi.Parameter(
                 'student_id',
                 openapi.IN_QUERY,

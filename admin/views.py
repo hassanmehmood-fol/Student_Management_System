@@ -1,7 +1,7 @@
 from rest_framework.views import APIView 
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from admin.serializers import AdminCreateUserSerializer , UserNameSerializer , StudentProfileSerializer ,  CourseScheduleSerializer 
+from admin.serializers import AdminCreateUserSerializer , UserNameSerializer , StudentProfileSerializer ,  CourseScheduleSerializerAdmin 
 from drf_yasg.utils import swagger_auto_schema
 from user.permissions import IsCustomAdmin
 from rest_framework import generics , mixins
@@ -13,18 +13,31 @@ from admin.serializers import CourseSerializer
 from django.shortcuts import get_object_or_404
 from admin.serializers import TeacherProfileSerializer , EnrollmentSerializer , AssignTeacherSerializer
 from rest_framework.decorators import action
+from admin.task import send_user_credentials_email , send_enrollment_email
+
 
 class AdminCreateUserView(APIView):
     permission_classes = [IsCustomAdmin]
-    
-    @swagger_auto_schema(request_body=AdminCreateUserSerializer , tags=['Create User (Teacher , Student) by Admin'])  
+
+    @swagger_auto_schema(
+        request_body=AdminCreateUserSerializer,
+        tags=['Create User (Teacher , Student) by Admin']
+    )
     def post(self, request):
         serializer = AdminCreateUserSerializer(data=request.data)
         if serializer.is_valid():
+            # Create user
             user = serializer.save()
+
+            # Get raw password from request if provided
+            raw_password = request.data.get('password')
+            if raw_password:
+                # Call Celery task asynchronously
+                send_user_credentials_email.delay(user.id, raw_password)
+            
             return Response({
-                "message": "User created successfully",
-                "user": {             
+                "message": "User created successfully and email is queued to be sent",
+                "user": {
                     "id": user.id,
                     "username": user.username,
                     "email": user.email,
@@ -183,7 +196,7 @@ class CourseScheduleViewSet(viewsets.ModelViewSet):
     Admin can create, update, view, and delete course schedules
     """
     queryset = CourseSchedule.objects.all()
-    serializer_class = CourseScheduleSerializer
+    serializer_class = CourseScheduleSerializerAdmin
     permission_classes = [IsCustomAdmin]
 
     @swagger_auto_schema(tags=["Course Schedule List by Admin"])
@@ -219,8 +232,12 @@ class EnrollStudentView(APIView):
         serializer = EnrollmentSerializer(data=request.data)
         if serializer.is_valid():
             enrollment = serializer.save()
+
+            # Trigger email notifications asynchronously
+            send_enrollment_email.delay(enrollment.student.id, enrollment.course.id)
+
             return Response({
-                "message": "Student enrolled successfully!",
+                "message": "Student enrolled successfully! Emails are queued to be sent.",
                 "data": EnrollmentSerializer(enrollment).data
             }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)       

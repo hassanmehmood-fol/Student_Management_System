@@ -4,12 +4,14 @@ from .views import (
     TeacherAssignedCoursesView,
     TeacherCoursesWithStudentsView,
     TeacherEnrollStudentView,
-    TeacherRemoveStudentView
+    TeacherRemoveStudentView,
+    TeacherAssignedCourseDetailView,
 )
 
 urlpatterns = [
     path('profile/', TeacherProfileView.as_view(), name='teacher-profile'),
     path('assigned-courses/', TeacherAssignedCoursesView.as_view(), name='teacher-assigned-courses'),
+    path('assigned-courses/<int:course_id>/', TeacherAssignedCourseDetailView.as_view(), name='teacher-assigned-course-detail'),
     path('courses-with-students/', TeacherCoursesWithStudentsView.as_view(), name='teacher-courses-with-students'),
 
     path('enroll-student/', TeacherEnrollStudentView.as_view(), name='teacher-enroll-student'),

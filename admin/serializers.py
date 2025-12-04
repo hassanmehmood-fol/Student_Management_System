@@ -2,6 +2,11 @@
 from rest_framework import serializers
 from core.models import User
 from core.models import Course, User, CourseTeacher , CourseSchedule , Enrollment
+from .task import send_user_credentials_email 
+import random, string
+
+def generate_random_password(length=8):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 class AdminCreateUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +25,15 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        # Generate a random password
+        password = generate_random_password()
+        
+        # Create the user with the password
+        user = User.objects.create_user(password=password, **validated_data)
+        
+        # Trigger Celery task to send email asynchronously
+        send_user_credentials_email.delay(user.email, user.username, password)
+        
         return user
 
 
@@ -94,13 +107,13 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'role'] 
 
 
-class CourseScheduleSerializer(serializers.ModelSerializer):
+class CourseScheduleSerializerAdmin(serializers.ModelSerializer):
     course_title = serializers.CharField(source='course.title', read_only=True)
     teacher_name = serializers.CharField(source='teacher.username', read_only=True)
 
     class Meta:
         model = CourseSchedule
-        fields = ['id', 'course', 'course_title','teacher', 'teacher_name' , 'day_of_week', 'start_time', 'end_time', 'location']
+        fields = ['id', 'course', 'course_title','teacher', 'teacher_name',  'day_of_week', 'start_time', 'end_time', 'location']
 
 
 class EnrollmentSerializer(serializers.ModelSerializer):
