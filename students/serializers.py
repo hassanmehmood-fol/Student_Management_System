@@ -13,26 +13,21 @@ class StudentselfProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['email', 'enrollment_year', 'batch', 'roll_number', 'username']
 
     def update(self, instance, validated_data):
-        # Update first_name & last_name
+
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
 
-        # Update password if provided
         password = validated_data.get('password', None)
         if password:
             instance.set_password(password)
 
         instance.save()
         return instance
-
-
-
+      
 class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email']
-
-
 
 class CourseScheduleSerializerStudents(serializers.ModelSerializer):
     day_of_week_display = serializers.CharField(source='get_day_of_week_display', read_only=True)
@@ -41,7 +36,6 @@ class CourseScheduleSerializerStudents(serializers.ModelSerializer):
     class Meta:
         model = CourseSchedule
         fields = ['id', 'day_of_week', 'day_of_week_display', 'start_time', 'end_time', 'location', 'teacher_name']
-        
         
 
 class StudentEnrolledCourseSerializer(serializers.ModelSerializer):
@@ -53,6 +47,6 @@ class StudentEnrolledCourseSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'duration', 'teachers', 'schedules']
 
     def get_schedules(self, obj):
-        qs = obj.schedules.all()  # all schedules of the course
+        qs = obj.schedules.all()  
         return CourseScheduleSerializerStudents(qs, many=True).data
         

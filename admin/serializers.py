@@ -25,23 +25,17 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        # Generate a random password
+       
         password = generate_random_password()
-        
-        # Create the user with the password
         user = User.objects.create_user(password=password, **validated_data)
-        
-        # Trigger Celery task to send email asynchronously
         send_user_credentials_email.delay(user.email, user.username, password)
         
         return user
-
 
 class UserNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name']
-        
         
 class CourseSerializer(serializers.ModelSerializer):
     teachers = serializers.SlugRelatedField(
@@ -57,34 +51,59 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = ['id', 'title', 'description', 'duration', 'teachers', 'students', 'created_at', 'updated_at']
         
+    def validate_title(self, value):
+        queryset = Course.objects.filter(title__iexact=value)
+
+        if self.instance:
+            queryset = queryset.exclude(id=self.instance.id)
+
+        if queryset.exists():
+            raise serializers.ValidationError("This course title already exists.")
+
+        return value
+        
+
     def get_students(self, obj):
         return [en.student.username for en in obj.enrollments.all()]    
+
 
     def create(self, validated_data):
         teachers = validated_data.pop('teachers', None)
         course = Course.objects.create(**validated_data)
+
         if teachers:
             for teacher in teachers:
                 CourseTeacher.objects.create(course=course, teacher=teacher)
+
         return course
+
 
     def update(self, instance, validated_data):
         teachers = validated_data.pop('teachers', None)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
         instance.save()
 
         if teachers is not None:  
             instance.teachers.clear()
             for teacher in teachers:
                 CourseTeacher.objects.create(course=instance, teacher=teacher)
-        return instance       
+
+        return instance
+     
+class TeacherListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email']
 
 
 class CourseBriefSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id', 'title', 'description', 'duration']
+
 
 class TeacherProfileSerializer(serializers.ModelSerializer):
     courses = serializers.SerializerMethodField()
@@ -94,7 +113,12 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'courses']
 
     def get_courses(self, obj):
-        return CourseSerializer(obj.courses.all(), many=True).data
+        return CourseBriefSerializer(obj.courses.all(), many=True).data
+        
+class StudentListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name']
     
     
 class StudentProfileSerializer(serializers.ModelSerializer):
@@ -129,25 +153,22 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         student_id = validated_data.pop('student_id')
         course_id = validated_data.pop('course_id')
 
-        # Validate student
         try:
             student = User.objects.get(id=student_id, role='student')
         except User.DoesNotExist:
             raise serializers.ValidationError({"student_id": "Student not found or not a student."})
 
-        # Validate course
         try:
             course = Course.objects.get(id=course_id)
         except Course.DoesNotExist:
             raise serializers.ValidationError({"course_id": "Course not found."})
 
-        # Check if already enrolled
         enrollment, created = Enrollment.objects.get_or_create(
             student=student,
             course=course,
             defaults={'status': validated_data.get('status', 'active')}
         )
-
+        
         if not created:
             raise serializers.ValidationError({"detail": "Student is already enrolled in this course."})
 

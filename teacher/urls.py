@@ -16,4 +16,5 @@ urlpatterns = [
 
     path('enroll-student/', TeacherEnrollStudentView.as_view(), name='teacher-enroll-student'),
     path('remove-student/', TeacherRemoveStudentView.as_view(), name='teacher-remove-student'),
+    
 ]

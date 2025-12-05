@@ -6,7 +6,6 @@ class TeacherOwnProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        
         fields = ['username', 'email', 'first_name', 'last_name', 'department', 'role']
         read_only_fields = ['role']  
 
@@ -19,7 +18,7 @@ class CourseScheduleSerializerTeacher(serializers.ModelSerializer):
         fields = ['id', 'day_of_week', 'day_of_week_display', 'start_time', 'end_time', 'location']
 
 class TeacherAssignedCourseSerializer(serializers.ModelSerializer):
-    schedules = serializers.SerializerMethodField()  # use SerializerMethodField
+    schedules = serializers.SerializerMethodField()  
 
     class Meta:
         model = Course
@@ -27,7 +26,7 @@ class TeacherAssignedCourseSerializer(serializers.ModelSerializer):
 
     def get_schedules(self, obj):
         user = self.context['request'].user
-        qs = obj.schedules.filter(teacher=user)  # only schedules for this teacher
+        qs = obj.schedules.filter(teacher=user)  
         return CourseScheduleSerializerTeacher(qs, many=True).data
 
 
@@ -45,16 +44,16 @@ class StudentEnrollmentSerializer(serializers.ModelSerializer):
 
 
 class TeacherCourseWithStudentsSerializer(serializers.ModelSerializer):
-    students = serializers.SerializerMethodField()  # Ye uncomment karo
+    students = serializers.SerializerMethodField()  
 
     class Meta:
         model = Course
-        fields = ['students']  # students bhi fields me hona chahiye
+        fields = ['students']  
 
     def get_students(self, obj):
         user = self.context['request'].user
 
-        # Sirf enrollments jo teacher ke courses me ho
+        
         enrollments = obj.enrollments.all()
     
         if user.role == 'teacher' and user not in obj.teachers.all():
@@ -72,7 +71,7 @@ class StudentDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'enrollment_year', 'batch', 'roll_number', 'courses']
 
     def get_courses(self, obj):
-        # Only courses taught by the requesting teacher
+    
         teacher = self.context['request'].user
         courses = obj.courses_enrolled.filter(teachers=teacher)
         return [{'id': c.id, 'title': c.title} for c in courses]
@@ -101,12 +100,10 @@ class TeacherEnrollStudentSerializer(serializers.ModelSerializer):
         except Course.DoesNotExist:
             raise serializers.ValidationError("Course not found.")
 
-        # Check if teacher owns the course
         request_user = self.context['request'].user
         if not course.teachers.filter(id=request_user.id).exists():
             raise serializers.ValidationError("You are not authorized to enroll students in this course.")
 
-        # Check if student already enrolled
         if Enrollment.objects.filter(student=student, course=course).exists():
             raise serializers.ValidationError("Student is already enrolled in this course.")
 

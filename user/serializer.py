@@ -22,7 +22,7 @@ class LoginSerializer(serializers.Serializer):
         if email and password:
             try:
                 user_obj = User.objects.get(email=email)
-                username = user_obj.username  # get username from email
+                username = user_obj.username  
             except User.DoesNotExist:
                 raise serializers.ValidationError("No user found with this email.")
 

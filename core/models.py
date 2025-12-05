@@ -152,8 +152,6 @@ class CourseSchedule(models.Model):
     def __str__(self):
         return f"{self.course.title} ({self.teacher.username}) on {self.get_day_of_week_display()} from {self.start_time} to {self.end_time} at {self.location}"
 
-
-
 class Notification(models.Model):
     NOTIF_TYPE = (
         ('general', 'General'),

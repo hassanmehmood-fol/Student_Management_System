@@ -8,13 +8,12 @@ from rest_framework import generics , mixins
 from core.models import User , CourseSchedule
 from drf_yasg import openapi
 from rest_framework import viewsets
-from core.models import Course , CourseTeacher
-from admin.serializers import CourseSerializer
+from core.models import Course , CourseTeacher , User , Enrollment
+from admin.serializers import CourseSerializer , StudentListSerializer , StudentProfileSerializer
 from django.shortcuts import get_object_or_404
-from admin.serializers import TeacherProfileSerializer , EnrollmentSerializer , AssignTeacherSerializer
+from admin.serializers import TeacherProfileSerializer , EnrollmentSerializer , AssignTeacherSerializer  , TeacherListSerializer
 from rest_framework.decorators import action
-from admin.task import send_user_credentials_email , send_enrollment_email
-
+from admin.task import send_user_credentials_email , send_enrollment_email , send_unenrollment_email , send_teacher_assignment_email
 
 class AdminCreateUserView(APIView):
     permission_classes = [IsCustomAdmin]
@@ -26,13 +25,11 @@ class AdminCreateUserView(APIView):
     def post(self, request):
         serializer = AdminCreateUserSerializer(data=request.data)
         if serializer.is_valid():
-            # Create user
             user = serializer.save()
 
-            # Get raw password from request if provided
             raw_password = request.data.get('password')
             if raw_password:
-                # Call Celery task asynchronously
+             
                 send_user_credentials_email.delay(user.id, raw_password)
             
             return Response({
@@ -45,7 +42,6 @@ class AdminCreateUserView(APIView):
                 }
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
     
 class UserListView(generics.ListAPIView):
     serializer_class = UserNameSerializer
@@ -103,7 +99,6 @@ class CourseViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
     
-    
     @swagger_auto_schema(
         request_body=AssignTeacherSerializer,
         tags=["Assign Teacher to Course by Admin"]
@@ -126,6 +121,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
             if created:
                 message = f"Teacher '{teacher.username}' assigned successfully!"
+                send_teacher_assignment_email.delay(teacher_id, course.id)
             else:
                 message = f"Teacher '{teacher.username}' is already assigned to this course."
 
@@ -133,16 +129,14 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
-    
-    
 class TeacherProfileViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Admin can view all teachers with their courses efficiently (prefetch_related).
-    """
     queryset = User.objects.filter(role='teacher').prefetch_related('courses')
-    serializer_class = TeacherProfileSerializer
     permission_classes = [IsCustomAdmin]
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return TeacherListSerializer
+        return TeacherProfileSerializer
 
     @swagger_auto_schema(tags=["Display Teachers List by Admin"])
     def list(self, request, *args, **kwargs):
@@ -151,9 +145,7 @@ class TeacherProfileViewSet(viewsets.ReadOnlyModelViewSet):
     @swagger_auto_schema(tags=["Teacher Detail Profile (Specific id) by Admin"])
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
-        return teacher    
-    
-    
+
 class StudentProfileViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -164,11 +156,15 @@ class StudentProfileViewSet(
     """
     Admin can view, update, or delete student profiles
     """
-    serializer_class = StudentProfileSerializer
     permission_classes = [IsCustomAdmin]
 
     def get_queryset(self):
         return User.objects.filter(role='student')
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return StudentListSerializer
+        return StudentProfileSerializer
 
     @swagger_auto_schema(tags=["Display Students List by Admin"])
     def list(self, request, *args, **kwargs):
@@ -188,8 +184,7 @@ class StudentProfileViewSet(
 
     @swagger_auto_schema(tags=["Delete Student Profile by Admin"])
     def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs) 
-    
+        return super().destroy(request, *args, **kwargs)
 
 class CourseScheduleViewSet(viewsets.ModelViewSet):
     """
@@ -233,7 +228,6 @@ class EnrollStudentView(APIView):
         if serializer.is_valid():
             enrollment = serializer.save()
 
-            # Trigger email notifications asynchronously
             send_enrollment_email.delay(enrollment.student.id, enrollment.course.id)
 
             return Response({
@@ -241,3 +235,33 @@ class EnrollStudentView(APIView):
                 "data": EnrollmentSerializer(enrollment).data
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)       
+    
+    
+class AdminUnenrollStudentView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    @swagger_auto_schema(
+        request_body=EnrollmentSerializer, 
+        tags=["Admin Unenroll Student"]
+    )
+    def post(self, request):
+        serializer = EnrollmentSerializer(data=request.data)
+        if serializer.is_valid():
+            student_id = serializer.validated_data['student_id']
+            course_id = serializer.validated_data['course_id']
+
+            enrollment = Enrollment.objects.filter(
+                student_id=student_id,
+                course_id=course_id
+            ).first()
+
+            if not enrollment:
+                return Response({"detail": "Enrollment not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            enrollment.delete()
+            send_unenrollment_email.delay(student_id, course_id)
+
+            return Response({"message": "Student unenrolled from course successfully."}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
