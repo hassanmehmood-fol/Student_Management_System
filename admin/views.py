@@ -61,7 +61,18 @@ class UserListView(generics.ListAPIView):
         tags=['List Users by Admin']
     )
     def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        
+        total_students = User.objects.filter(role='student').count()
+        total_teachers = User.objects.filter(role='teacher').count()
+        
+        return Response({
+            "total_students": total_students,
+            "total_teachers": total_teachers,
+            "count": queryset.count(),
+            "results": serializer.data
+        })
 
     def get_queryset(self):
         role = self.request.query_params.get('role')
