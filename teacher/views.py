@@ -7,7 +7,7 @@ from core.models import Course , User , Enrollment
 from teacher.permissions import IsTeacherAndOwner
 from rest_framework.response import Response
 from drf_yasg import openapi
-from admin.task import send_unenrollment_email
+from admin.task import send_unenrollment_email , send_enrollment_email
 
 
 class TeacherProfileView(generics.RetrieveUpdateAPIView):
@@ -51,7 +51,7 @@ class TeacherAssignedCourseDetailView(generics.RetrieveAPIView):
     serializer_class = TeacherAssignedCourseSerializer
     permission_classes = [IsAuthenticated, IsTeacherAndOwner]
     lookup_url_kwarg = 'course_id'
-
+    
     def get_queryset(self):
         return Course.objects.filter(teachers=self.request.user)
 
@@ -116,41 +116,40 @@ class TeacherEnrollStudentView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         enrollment = serializer.save()
-        
-        from admin.task import send_enrollment_email
+    
         send_enrollment_email.delay(enrollment.student.id, enrollment.course.id)
 
 
 
-class TeacherRemoveStudentView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated, IsTeacherAndOwner]
+# class TeacherRemoveStudentView(generics.GenericAPIView):
+#     permission_classes = [IsAuthenticated, IsTeacherAndOwner]
 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'student_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the student to remove'),
-                'course_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the course')
-            },
-            required=['student_id', 'course_id']
-        ),
-        tags=["Delete Student from Course (self)"]
-    )
-    def delete(self, request, *args, **kwargs):
-        student_id = request.data.get('student_id')
-        course_id = request.data.get('course_id')
+#     @swagger_auto_schema(
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             properties={
+#                 'student_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the student to remove'),
+#                 'course_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the course')
+#             },
+#             required=['student_id', 'course_id']
+#         ),
+#         tags=["Delete Student from Course (self)"]
+#     )
+#     def delete(self, request, *args, **kwargs):
+#         student_id = request.data.get('student_id')
+#         course_id = request.data.get('course_id')
 
-        try:
-            enrollment = Enrollment.objects.get(student_id=student_id, course_id=course_id)
-        except Enrollment.DoesNotExist:
-            return Response({"detail": "Enrollment not found."}, status=status.HTTP_404_NOT_FOUND)
+#         try:
+#             enrollment = Enrollment.objects.get(student_id=student_id, course_id=course_id)
+#         except Enrollment.DoesNotExist:
+#             return Response({"detail": "Enrollment not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Ensure teacher is assigned to this course
-        if not enrollment.course.teachers.filter(id=request.user.id).exists():
-            return Response({"detail": "Not authorized to remove this student."}, status=status.HTTP_403_FORBIDDEN)
+#         # Ensure teacher is assigned to this course
+#         if not enrollment.course.teachers.filter(id=request.user.id).exists():
+#             return Response({"detail": "Not authorized to remove this student."}, status=status.HTTP_403_FORBIDDEN)
 
-        enrollment.delete()
-        return Response({"message": "Student removed from course successfully."}, status=status.HTTP_200_OK)
+#         enrollment.delete()
+#         return Response({"message": "Student removed from course successfully."}, status=status.HTTP_200_OK)
     
           
 

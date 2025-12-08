@@ -91,7 +91,7 @@ class CourseSerializer(serializers.ModelSerializer):
             for teacher in teachers:
                 CourseTeacher.objects.create(course=instance, teacher=teacher)
 
-        return instance
+        return instance                
      
 class TeacherListSerializer(serializers.ModelSerializer):
     class Meta:
